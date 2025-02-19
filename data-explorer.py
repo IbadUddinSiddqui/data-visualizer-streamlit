@@ -58,25 +58,48 @@ elif chart_type == "Histogram":
 
 st.plotly_chart(fig)
 
-# File conversion
-st.subheader("Convert File Format")
-# Convert to CSV
-csv = filtered_df.to_csv(index=False).encode()
-st.download_button(
-    label="Download as CSV",
-    data=csv,
-    file_name="filtered_data.csv",
-    mime="text/csv"
-)
+# New File Conversion Section
+st.markdown("---")  # Add a visual separator
+st.header("File Format Converter")
+st.write("Convert your files between CSV and Excel formats")
 
-# Convert to Excel
-excel_buffer = BytesIO()
-with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
-    filtered_df.to_excel(writer, index=False)
-excel_bytes = excel_buffer.getvalue()
-st.download_button(
-    label="Download as Excel",
-    data=excel_bytes,
-    file_name="filtered_data.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+convert_file = st.file_uploader("Upload file to convert", type=["csv", "xlsx"], key="converter")
+
+if convert_file is not None:
+    # Determine file type and load accordingly
+    if convert_file.name.endswith('.csv'):
+        # Converting from CSV to Excel
+        df_to_convert = pd.read_csv(convert_file)
+        
+        # Convert to Excel
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+            df_to_convert.to_excel(writer, index=False)
+        excel_bytes = excel_buffer.getvalue()
+        
+        st.download_button(
+            label="Download as Excel",
+            data=excel_bytes,
+            file_name=convert_file.name.replace('.csv', '.xlsx'),
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        st.success("CSV file ready to be downloaded as Excel!")
+        
+    elif convert_file.name.endswith('.xlsx'):
+        # Converting from Excel to CSV
+        df_to_convert = pd.read_excel(convert_file, engine="openpyxl")
+        
+        # Convert to CSV
+        csv = df_to_convert.to_csv(index=False).encode()
+        
+        st.download_button(
+            label="Download as CSV",
+            data=csv,
+            file_name=convert_file.name.replace('.xlsx', '.csv'),
+            mime="text/csv"
+        )
+        st.success("Excel file ready to be downloaded as CSV!")
+
+    # Show preview of the data
+    st.subheader("File Preview")
+    st.write(df_to_convert.head())
